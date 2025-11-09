@@ -1,14 +1,20 @@
+import { getCachedToken } from '../../../lib/tokenCache.js';
+
 /**
  * Function to retrieve a specific database from the WoLai API.
  *
  * @param {Object} args - Arguments for the database retrieval.
  * @param {string} args.id - The ID of the database to retrieve.
+ * @param {string} args.token - Optional token. If not provided, will use cached token.
  * @returns {Promise<Object>} - The result of the database retrieval.
  */
 const executeFunction = async ({ id, token }) => {
   const baseUrl = 'https://openapi.wolai.com/v1/databases';
   
-  if (!token) {
+  // 如果没有提供token，尝试从缓存获取
+  const finalToken = token || getCachedToken();
+  
+  if (!finalToken) {
     throw new Error('Token is required. Please call get_token first to obtain a token.');
   }
   
@@ -19,7 +25,7 @@ const executeFunction = async ({ id, token }) => {
   try {
     // Set up headers for the request
     const headers = {
-      'Authorization': token,
+      'Authorization': finalToken,
       'Content-Type': 'application/json'
     };
 
@@ -59,20 +65,20 @@ const apiTool = {
     type: 'function',
     function: {
       name: 'get_database',
-      description: 'Retrieve a specific database from the WoLai API by its ID. The response will contain a "data" field with the database information on success.',
+      description: '通过 ID 从 WoLai API 检索特定数据库。重要提示：这适用于 Wolai 数据库（数据库页面），不适用于普通页面中的表格块。如果需要处理页面中的表格块，请改用 get_block。成功时响应将包含一个 "data" 字段，其中包含数据库信息。',
       parameters: {
         type: 'object',
         properties: {
           id: {
             type: 'string',
-            description: 'The ID of the database to retrieve. Database ID can be obtained from the wolai database page URL: open the database page in Wolai, and the ID is the part after wolai.com/ in the URL. For example, if the URL is https://www.wolai.com/wolai/abc123xyz, then the database ID is "abc123xyz". The database must already exist in Wolai (databases cannot be created via API, only rows can be inserted).'
+            description: '要检索的数据库的 ID。重要提示：这适用于 Wolai 数据库（数据库页面），不适用于普通页面中的表格块。如果需要处理页面中的表格块，请改用 get_block。数据库 ID 可以从 wolai 数据库页面 URL 获取：在 Wolai 中打开数据库页面，ID 是 URL 中 wolai.com/ 后面的部分。例如，如果 URL 是 https://www.wolai.com/wolai/abc123xyz，则数据库 ID 是 "abc123xyz"。数据库必须已在 Wolai 中存在（无法通过 API 创建数据库，只能插入行）。'
           },
           token: {
             type: 'string',
-            description: 'The Wolai API token (obtained from get_token tool).'
+            description: 'Wolai API token（从 get_token 工具获取）。如果未提供，将自动使用缓存的token。'
           }
         },
-        required: ['id', 'token']
+        required: ['id']
       }
     }
   }

@@ -1,9 +1,12 @@
+import { getCachedToken } from '../../../lib/tokenCache.js';
+
 /**
  * Function to create blocks in WoLai.
  *
  * @param {Object} args - Arguments for creating blocks.
  * @param {string} args.parent_id - The ID of the parent block.
  * @param {Array<Object>} args.blocks - An array of block objects to create.
+ * @param {string} args.token - Optional token. If not provided, will use cached token.
  * @returns {Promise<Object>} - The result of the block creation.
  */
 const executeFunction = async ({ parent_id, blocks, token }) => {
@@ -16,7 +19,10 @@ const executeFunction = async ({ parent_id, blocks, token }) => {
     throw new Error('Parent ID is required. Provide it as a parameter or set WOLAI_BLOCK_ID environment variable.');
   }
   
-  if (!token) {
+  // 如果没有提供token，尝试从缓存获取
+  const finalToken = token || getCachedToken();
+  
+  if (!finalToken) {
     throw new Error('Token is required. Please call get_token first to obtain a token.');
   }
   
@@ -32,7 +38,7 @@ const executeFunction = async ({ parent_id, blocks, token }) => {
   try {
     // Set up headers for the request
     const headers = {
-      'Authorization': token,
+      'Authorization': finalToken,
       'Content-Type': 'application/json'
     };
 
@@ -51,6 +57,23 @@ const executeFunction = async ({ parent_id, blocks, token }) => {
 
     // Parse and return the response data
     const data = await response.json();
+    
+    // 提取并返回创建的块的实际内容信息
+    if (data && data.data) {
+      const createdBlocks = Array.isArray(data.data) ? data.data : [data.data];
+      return {
+        success: true,
+        created_blocks: createdBlocks.map(block => ({
+          id: block.id,
+          type: block.type,
+          content: block.content || block.title || block.text || '',
+          parent_id: block.parent_id,
+          created_time: block.created_time,
+        })),
+        count: createdBlocks.length,
+      };
+    }
+    
     return data;
   } catch (error) {
     console.error('Error creating blocks:', error);
@@ -70,17 +93,17 @@ const apiTool = {
     type: 'function',
     function: {
       name: 'create_blocks',
-      description: 'Create one or more blocks in WoLai. The blocks will be inserted into the specified parent block or page. Note: parent_id must be a valid page ID or block ID. If you get a permission error, check that the application has been added to the page in the page collaboration settings. The response will contain a "data" field with the created block information on success.',
+      description: '在 WoLai 中创建一个或多个块。块将被插入到指定的父块或页面中。重要提示：如果未提供 parent_id，将使用环境变量 WOLAI_BLOCK_ID。此工具可以创建各种块类型，包括文本、标题和 simple-table（用于在页面中创建表格）。注意：parent_id 必须是有效的页面 ID 或块 ID。如果遇到权限错误，请检查应用程序是否已在页面协作设置中添加到页面。成功时返回创建的块的实际内容信息（id、type、content 等），而不是接口响应结构。',
       parameters: {
         type: 'object',
         properties: {
           parent_id: {
             type: 'string',
-            description: 'The ID of the parent block or page where the new blocks will be inserted. This can be a page ID (from wolai.com/ URL) or a block ID. If not provided, will use WOLAI_BLOCK_ID from environment variables. Note: If you get a permission error, ensure the application has been added to the page in page collaboration settings.'
+            description: '要插入新块的父块或页面的 ID。这可以是页面 ID（来自 wolai.com/ URL）或块 ID。重要提示：如果未提供，将自动使用环境变量 WOLAI_BLOCK_ID 的值。注意：如果遇到权限错误，请确保应用程序已在页面协作设置中添加到页面。'
           },
           token: {
             type: 'string',
-            description: 'The Wolai API token (obtained from get_token tool).'
+            description: 'Wolai API token（从 get_token 工具获取）。如果未提供，将自动使用缓存的token。'
           },
           blocks: {
             type: 'array',
@@ -89,26 +112,26 @@ const apiTool = {
               properties: {
                 type: {
                   type: 'string',
-                  description: 'The type of the block (e.g., "text", "heading", etc.).'
+                  description: '块的类型（例如 "text"、"heading"、"simple-table" 用于在页面中创建表格等）。使用 "simple-table" 在页面中创建表格块，而不是使用 create_database_rows（后者用于数据库行）。'
                 },
                 content: {
-                  description: 'The content of the block. For text blocks, this is a string. For heading blocks, this can be an object with properties like "title" and "front_color".'
+                  description: '块的内容。对于文本块，这是一个字符串。对于标题块，这可以是一个包含 "title" 和 "front_color" 等属性的对象。'
                 },
                 text_alignment: {
                   type: 'string',
-                  description: 'The alignment of the text (e.g., "center", "left", "right").'
+                  description: '文本的对齐方式（例如 "center"、"left"、"right"）。'
                 },
                 level: {
                   type: 'integer',
-                  description: 'The heading level (1-6, only applicable for heading type blocks).'
+                  description: '标题级别（1-6，仅适用于标题类型的块）。'
                 }
               },
               required: ['type']
             },
-            description: 'An array of block objects to create. Each block object must have a "type" field. The "content" field format varies by block type: for text blocks it\'s a string, for heading blocks it can be an object with "title" and "front_color" properties.'
+            description: '要创建的块对象数组。每个块对象必须有一个 "type" 字段。"content" 字段的格式因块类型而异：对于文本块，它是一个字符串；对于标题块，它可以是一个包含 "title" 和 "front_color" 属性的对象。'
           }
         },
-        required: ['blocks', 'token']
+        required: ['blocks']
       }
     }
   }

@@ -1,3 +1,5 @@
+import { cacheToken } from '../../../lib/tokenCache.js';
+
 /**
  * Function to obtain a token from the WoLai API.
  *
@@ -47,6 +49,22 @@ const executeFunction = async ({ appId, appSecret }) => {
 
     // Parse and return the response data
     const data = await response.json();
+    
+    // 如果成功获取token，自动缓存
+    if (data && data.data && data.data.app_token) {
+      const expireTime = data.data.expire_time;
+      cacheToken(data.data.app_token, expireTime);
+      
+      // 返回简化的token信息，而不是完整的接口响应
+      return {
+        token: data.data.app_token,
+        app_id: data.data.app_id,
+        expire_time: expireTime,
+        is_permanent: expireTime === -1,
+        message: 'Token 已获取并自动缓存，后续调用无需再传递 token 参数',
+      };
+    }
+    
     return data;
   } catch (error) {
     console.error('Error obtaining token:', error);
@@ -66,17 +84,17 @@ const apiTool = {
     type: 'function',
     function: {
       name: 'get_token',
-      description: 'Obtain a token from the WoLai API. The response contains a "data" object with "app_token" (the token to use), "app_id", "create_time", "expire_time" (-1 means no expiration), and "update_time". Use the "app_token" value directly as the Authorization header value (not Bearer format) for other API calls.',
+      description: '从 WoLai API 获取 token。返回简化的 token 信息（token、app_id、expire_time 等），token 会自动缓存，后续调用其他工具时无需再传递 token 参数。',
       parameters: {
         type: 'object',
         properties: {
           appId: {
             type: 'string',
-            description: 'The application ID for authentication. If not provided, will use WOLAI_APP_ID from environment variables.'
+            description: '用于身份验证的应用程序 ID。如果未提供，将使用环境变量 WOLAI_APP_ID。'
           },
           appSecret: {
             type: 'string',
-            description: 'The application secret for authentication. If not provided, will use WOLAI_APP_SECRET from environment variables.'
+            description: '用于身份验证的应用程序密钥。如果未提供，将使用环境变量 WOLAI_APP_SECRET。'
           }
         },
         required: []

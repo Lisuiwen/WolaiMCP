@@ -1,9 +1,12 @@
+import { getCachedToken } from '../../../lib/tokenCache.js';
+
 /**
  * Function to create rows in a database using the WoLai API.
  *
  * @param {Object} args - Arguments for creating rows.
  * @param {string} args.database_id - The ID of the database.
  * @param {Array<Object>} args.rows - An array of row objects to be created.
+ * @param {string} args.token - Optional token. If not provided, will use cached token.
  * @returns {Promise<Object>} - The result of the row creation.
  */
 const executeFunction = async ({ database_id, rows, token }) => {
@@ -12,7 +15,10 @@ const executeFunction = async ({ database_id, rows, token }) => {
   // database_id can come from parameter or environment variable
   const finalDatabaseId = database_id || process.env.WOLAI_DATABASE_ID;
   
-  if (!token) {
+  // 如果没有提供token，尝试从缓存获取
+  const finalToken = token || getCachedToken();
+  
+  if (!finalToken) {
     throw new Error('Token is required. Please call get_token first to obtain a token.');
   }
   
@@ -27,7 +33,7 @@ const executeFunction = async ({ database_id, rows, token }) => {
   try {
     // Set up headers for the request
     const headers = {
-      'Authorization': token,
+      'Authorization': finalToken,
       'Content-Type': 'application/json'
     };
 
@@ -71,28 +77,28 @@ const apiTool = {
     type: 'function',
     function: {
       name: 'create_database_rows',
-      description: 'Insert rows (data) into an existing database using the WoLai API. Note: The database must already exist in Wolai. You need to provide the database ID to specify which database to insert data into. The response will contain a "data" field with the result on success.',
+      description: '使用 WoLai API 向现有数据库插入行（数据）。重要提示：这适用于 Wolai 数据库（数据库页面），不适用于普通页面中的表格块。如果需要在页面中创建表格，请改用 create_blocks 并指定 type "simple-table"。注意：数据库必须已在 Wolai 中存在。需要提供数据库 ID 以指定要插入数据的数据库。如果未提供 database_id，将使用环境变量 WOLAI_DATABASE_ID。成功时响应将包含一个 "data" 字段，其中包含结果。',
       parameters: {
         type: 'object',
         properties: {
           database_id: {
             type: 'string',
-            description: 'The ID of the existing database where rows will be created. Database ID can be obtained from the wolai database page URL: open the database page in Wolai, and the ID is the part after wolai.com/ in the URL. For example, if the URL is https://www.wolai.com/wolai/abc123xyz, then the database ID is "abc123xyz". If not provided, will use WOLAI_DATABASE_ID from environment variables. Note: The database must already exist in Wolai (databases cannot be created via API, only rows can be inserted).'
+            description: '要创建行的现有数据库的 ID。重要提示：这适用于 Wolai 数据库（数据库页面），不适用于普通页面中的表格块。如果需要在页面中创建表格，请改用 create_blocks 并指定 type "simple-table"。数据库 ID 可以从 wolai 数据库页面 URL 获取：在 Wolai 中打开数据库页面，ID 是 URL 中 wolai.com/ 后面的部分。例如，如果 URL 是 https://www.wolai.com/wolai/abc123xyz，则数据库 ID 是 "abc123xyz"。如果未提供，将自动使用环境变量 WOLAI_DATABASE_ID。注意：数据库必须已在 Wolai 中存在（无法通过 API 创建数据库，只能插入行）。'
           },
           token: {
             type: 'string',
-            description: 'The Wolai API token (obtained from get_token tool).'
+            description: 'Wolai API token（从 get_token 工具获取）。如果未提供，将自动使用缓存的token。'
           },
           rows: {
             type: 'array',
             items: {
               type: 'object',
-              description: 'An object representing a row to be created.'
+              description: '表示要创建的行的对象。'
             },
-            description: 'An array of row objects to be created.'
+            description: '要创建的行对象数组。'
           }
         },
-        required: ['rows', 'token']
+        required: ['rows']
       }
     }
   }
