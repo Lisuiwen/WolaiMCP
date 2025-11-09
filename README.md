@@ -42,9 +42,13 @@ cp .env.example .env
 WOLAI_APP_ID=your_app_id
 WOLAI_APP_SECRET=your_app_secret
 
-# Optional: Default parent ID for create_blocks
+# Optional: Default block/page ID for create_blocks
 # If set, you can omit parent_id parameter when calling create_blocks
-WOLAI_PARENT_ID=your_default_parent_id
+WOLAI_BLOCK_ID=your_default_block_id
+
+# Optional: Default database ID for create_database_rows
+# If set, you can omit database_id parameter when calling create_database_rows
+WOLAI_DATABASE_ID=your_default_database_id
 ```
 
 **How to get your credentials:**
@@ -55,11 +59,13 @@ WOLAI_PARENT_ID=your_default_parent_id
 **How to use the tools:**
 1. First, call `get_token` with your App ID and App Secret (or use environment variables) to obtain a token
 2. Use the returned `app_token` as the `token` parameter for all other API calls
-3. For `create_blocks`, you can set `WOLAI_PARENT_ID` in `.env` to use a default parent ID, or provide it as a parameter
+3. For `create_blocks`, you can set `WOLAI_BLOCK_ID` in `.env` to use a default block/page ID, or provide it as a parameter
+4. For `create_database_rows`, you can set `WOLAI_DATABASE_ID` in `.env` to use a default database ID, or provide it as a parameter
 
 **Note:** 
 - `get_token` can use environment variables (`WOLAI_APP_ID` and `WOLAI_APP_SECRET`) if parameters are not provided
-- `create_blocks` can use environment variable (`WOLAI_PARENT_ID`) if `parent_id` parameter is not provided
+- `create_blocks` can use environment variable (`WOLAI_BLOCK_ID`) if `parent_id` parameter is not provided
+- `create_database_rows` can use environment variable (`WOLAI_DATABASE_ID`) if `database_id` parameter is not provided
 - All other tools require the `token` parameter (obtained from `get_token`)
 - **Important**: The token from `get_token` should be used directly as the Authorization header value (not in Bearer format). The API expects the token value directly, not `Bearer {token}`.
 

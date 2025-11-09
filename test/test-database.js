@@ -1,6 +1,6 @@
 /**
  * 测试脚本 - 测试 Wolai Database API
- * 使用方法: node test-database.js
+ * 使用方法: node test/test-database.js
  * 
  * 需要先配置 .env 文件:
  * - WOLAI_APP_ID
@@ -14,11 +14,11 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, ".env") });
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
-const { apiTool: getTokenTool } = await import("./tools/my-workspace/wo-lai/get-token.js");
-const { apiTool: getDatabaseTool } = await import("./tools/my-workspace/wo-lai/get-database.js");
-const { apiTool: createDatabaseRowsTool } = await import("./tools/my-workspace/wo-lai/create-database-rows.js");
+const { apiTool: getTokenTool } = await import("../tools/my-workspace/wo-lai/get-token.js");
+const { apiTool: getDatabaseTool } = await import("../tools/my-workspace/wo-lai/get-database.js");
+const { apiTool: createDatabaseRowsTool } = await import("../tools/my-workspace/wo-lai/create-database-rows.js");
 
 async function testDatabase() {
   console.log("=== Wolai Database API 测试 ===\n");

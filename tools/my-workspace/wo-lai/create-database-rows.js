@@ -9,12 +9,15 @@
 const executeFunction = async ({ database_id, rows, token }) => {
   const baseUrl = 'https://openapi.wolai.com/v1/databases';
   
+  // database_id can come from parameter or environment variable
+  const finalDatabaseId = database_id || process.env.WOLAI_DATABASE_ID;
+  
   if (!token) {
     throw new Error('Token is required. Please call get_token first to obtain a token.');
   }
   
-  if (!database_id) {
-    throw new Error('Database ID is required');
+  if (!finalDatabaseId) {
+    throw new Error('Database ID is required. Provide it as a parameter or set WOLAI_DATABASE_ID environment variable.');
   }
   
   if (!rows || !Array.isArray(rows) || rows.length === 0) {
@@ -29,7 +32,7 @@ const executeFunction = async ({ database_id, rows, token }) => {
     };
 
     // Construct the full URL with database ID
-    const url = `${baseUrl}/${database_id}/rows`;
+    const url = `${baseUrl}/${finalDatabaseId}/rows`;
 
     // Prepare the request body
     const body = JSON.stringify({ rows });
@@ -74,7 +77,7 @@ const apiTool = {
         properties: {
           database_id: {
             type: 'string',
-            description: 'The ID of the existing database where rows will be created. Database ID can be obtained from the wolai database page URL (the part after wolai.com/). This ID is required because you need to specify which existing database to insert data into.'
+            description: 'The ID of the existing database where rows will be created. Database ID can be obtained from the wolai database page URL: open the database page in Wolai, and the ID is the part after wolai.com/ in the URL. For example, if the URL is https://www.wolai.com/wolai/abc123xyz, then the database ID is "abc123xyz". If not provided, will use WOLAI_DATABASE_ID from environment variables. Note: The database must already exist in Wolai (databases cannot be created via API, only rows can be inserted).'
           },
           token: {
             type: 'string',
@@ -89,7 +92,7 @@ const apiTool = {
             description: 'An array of row objects to be created.'
           }
         },
-        required: ['database_id', 'rows', 'token']
+        required: ['rows', 'token']
       }
     }
   }

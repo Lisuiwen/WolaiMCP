@@ -10,10 +10,10 @@ const executeFunction = async ({ parent_id, blocks, token }) => {
   const baseUrl = 'https://openapi.wolai.com/v1/blocks';
   
   // parent_id can come from parameter or environment variable
-  const finalParentId = parent_id || process.env.WOLAI_PARENT_ID;
+  const finalParentId = parent_id || process.env.WOLAI_BLOCK_ID;
   
   if (!finalParentId) {
-    throw new Error('Parent ID is required. Provide it as a parameter or set WOLAI_PARENT_ID environment variable.');
+    throw new Error('Parent ID is required. Provide it as a parameter or set WOLAI_BLOCK_ID environment variable.');
   }
   
   if (!token) {
@@ -76,7 +76,7 @@ const apiTool = {
         properties: {
           parent_id: {
             type: 'string',
-            description: 'The ID of the parent block or page where the new blocks will be inserted. This can be a page ID (from wolai.com/ URL) or a block ID. If not provided, will use WOLAI_PARENT_ID from environment variables. Note: If you get a permission error, ensure the application has been added to the page in page collaboration settings.'
+            description: 'The ID of the parent block or page where the new blocks will be inserted. This can be a page ID (from wolai.com/ URL) or a block ID. If not provided, will use WOLAI_BLOCK_ID from environment variables. Note: If you get a permission error, ensure the application has been added to the page in page collaboration settings.'
           },
           token: {
             type: 'string',

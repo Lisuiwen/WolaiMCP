@@ -65,7 +65,7 @@ const apiTool = {
         properties: {
           id: {
             type: 'string',
-            description: 'The ID of the database to retrieve. Database ID can be obtained from the wolai database page URL (the part after wolai.com/). Similar to page ID, database is an existing resource created in Wolai.'
+            description: 'The ID of the database to retrieve. Database ID can be obtained from the wolai database page URL: open the database page in Wolai, and the ID is the part after wolai.com/ in the URL. For example, if the URL is https://www.wolai.com/wolai/abc123xyz, then the database ID is "abc123xyz". The database must already exist in Wolai (databases cannot be created via API, only rows can be inserted).'
           },
           token: {
             type: 'string',

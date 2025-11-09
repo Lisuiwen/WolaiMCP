@@ -1,6 +1,6 @@
 /**
  * 交互式测试脚本 - 测试 Wolai Database API
- * 使用方法: node test-database-interactive.js
+ * 使用方法: node test/test-database-interactive.js
  */
 import dotenv from "dotenv";
 import path from "path";
@@ -10,7 +10,7 @@ import readline from "readline";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, ".env") });
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -23,16 +23,16 @@ function question(prompt) {
   });
 }
 
-const { apiTool: getTokenTool } = await import("./tools/my-workspace/wo-lai/get-token.js");
-const { apiTool: getDatabaseTool } = await import("./tools/my-workspace/wo-lai/get-database.js");
-const { apiTool: createDatabaseRowsTool } = await import("./tools/my-workspace/wo-lai/create-database-rows.js");
+const { apiTool: getTokenTool } = await import("../tools/my-workspace/wo-lai/get-token.js");
+const { apiTool: getDatabaseTool } = await import("../tools/my-workspace/wo-lai/get-database.js");
+const { apiTool: createDatabaseRowsTool } = await import("../tools/my-workspace/wo-lai/create-database-rows.js");
 
 async function testDatabase() {
   console.log("=== Wolai Database API 测试 ===\n");
 
   const appId = process.env.WOLAI_APP_ID;
   const appSecret = process.env.WOLAI_APP_SECRET;
-  let databaseId = process.env.WOLAI_DATABASE_ID;
+  const databaseId = process.env.WOLAI_DATABASE_ID;
 
   if (!appId || !appSecret) {
     console.error("❌ 请先设置 WOLAI_APP_ID 和 WOLAI_APP_SECRET");
@@ -41,15 +41,17 @@ async function testDatabase() {
   }
 
   if (!databaseId) {
-    databaseId = await question("请输入 Database ID (从数据库页面 URL 获取，wolai.com/ 后面的部分): ");
-    if (!databaseId) {
-      console.log("❌ 需要 Database ID 才能继续");
-      rl.close();
-      return;
-    }
-  } else {
-    console.log("✓ 从环境变量读取到 WOLAI_DATABASE_ID");
+    console.error("❌ 请先设置 WOLAI_DATABASE_ID");
+    console.log("\n💡 提示:");
+    console.log("   - WOLAI_DATABASE_ID 是数据库页面的 ID");
+    console.log("   - 在 Wolai 中打开数据库页面，从 URL 获取 ID");
+    console.log("   - URL 格式: https://www.wolai.com/wolai/{数据库ID}");
+    rl.close();
+    return;
   }
+
+  console.log("✓ 使用 WOLAI_DATABASE_ID");
+  console.log(`Database ID: ${databaseId}\n`);
 
   // 步骤1: 获取 Token
   console.log("\n--- 步骤1: 获取 Token ---");
@@ -80,6 +82,11 @@ async function testDatabase() {
 
   if (getDatabaseResult.error) {
     console.error("❌ 获取数据库失败:", getDatabaseResult.error);
+    console.log("\n💡 提示:");
+    console.log("   - 请确认 WOLAI_DATABASE_ID 是数据库页面的 ID（不是普通页面）");
+    console.log("   - 数据库 ID 需要从数据库页面的 URL 获取");
+    console.log("   - 在 Wolai 中打开数据库页面，URL 格式: https://www.wolai.com/wolai/{数据库ID}");
+    console.log("   - 如果这个 ID 是普通页面，需要先创建一个数据库，然后使用数据库的 ID");
     rl.close();
     return;
   }

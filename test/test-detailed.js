@@ -1,11 +1,11 @@
 /**
  * 测试脚本 - 测试 Wolai API 完整流程
- * 使用方法: node test-detailed.js
+ * 使用方法: node test/test-detailed.js
  * 
  * 需要先配置 .env 文件:
  * - WOLAI_APP_ID
  * - WOLAI_APP_SECRET  
- * - WOLAI_PARENT_ID
+ * - WOLAI_BLOCK_ID
  */
 import dotenv from "dotenv";
 import path from "path";
@@ -14,33 +14,33 @@ import { fileURLToPath } from "url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.resolve(__dirname, ".env") });
+dotenv.config({ path: path.resolve(__dirname, "..", ".env") });
 
-const { apiTool: getTokenTool } = await import("./tools/my-workspace/wo-lai/get-token.js");
-const { apiTool: getBlockTool } = await import("./tools/my-workspace/wo-lai/get-block.js");
-const { apiTool: createBlocksTool } = await import("./tools/my-workspace/wo-lai/create-blocks.js");
+const { apiTool: getTokenTool } = await import("../tools/my-workspace/wo-lai/get-token.js");
+const { apiTool: getBlockTool } = await import("../tools/my-workspace/wo-lai/get-block.js");
+const { apiTool: createBlocksTool } = await import("../tools/my-workspace/wo-lai/create-blocks.js");
 
 async function testDetailed() {
   console.log("=== Wolai API 测试流程 ===\n");
 
   const appId = process.env.WOLAI_APP_ID;
   const appSecret = process.env.WOLAI_APP_SECRET;
-  const parentId = process.env.WOLAI_PARENT_ID;
+  const blockId = process.env.WOLAI_BLOCK_ID;
 
   if (!appId || !appSecret) {
     console.error("❌ 请先设置 WOLAI_APP_ID 和 WOLAI_APP_SECRET");
     return;
   }
 
-  if (!parentId) {
-    console.error("❌ 请先设置 WOLAI_PARENT_ID");
+  if (!blockId) {
+    console.error("❌ 请先设置 WOLAI_BLOCK_ID");
     return;
   }
 
   console.log("环境变量检查:");
   console.log(`  WOLAI_APP_ID: ${appId.substring(0, 10)}...`);
   console.log(`  WOLAI_APP_SECRET: ${appSecret.substring(0, 10)}...`);
-  console.log(`  WOLAI_PARENT_ID: ${parentId}\n`);
+  console.log(`  WOLAI_BLOCK_ID: ${blockId}\n`);
 
   // 步骤1: 获取 Token
   console.log("--- 步骤1: 获取 Token ---");
@@ -65,7 +65,7 @@ async function testDetailed() {
   // 步骤2: 测试获取块信息（验证 Token 是否有效）
   console.log("--- 步骤2: 验证 Token（获取块信息） ---");
   const getBlockResult = await getBlockTool.function({
-    id: parentId,
+    id: blockId,
     token: appToken
   });
 
@@ -106,7 +106,7 @@ async function testDetailed() {
 
   const createResult = await createBlocksTool.function({
     token: appToken,
-    parent_id: parentId,
+    parent_id: blockId,
     blocks: blocks
   });
 
